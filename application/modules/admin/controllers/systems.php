@@ -1,0 +1,192 @@
+<?php
+
+if (!defined('BASEPATH'))
+    exit('No direct script access allowed');
+
+class Systems extends CI_Controller {
+
+    function Systems() {
+        parent::__construct();
+        $this->load->database();
+        $this->load->model("system_model");
+        $this->load->model("mailbox_model");
+        $this->load->library('form_validation');
+
+        /* cache control */
+        $this->output->set_header('Last-Modified: ' . gmdate("D, d M Y H:i:s") . ' GMT');
+        $this->output->set_header('Cache-Control: no-store, no-cache, must-revalidate, post-check=0, pre-check=0');
+        $this->output->set_header('Pragma: no-cache');
+        $this->output->set_header("Expires: Mon, 26 Jul 1997 05:00:00 GMT");
+
+        check_login();
+    }
+
+    function index() {
+        //checking permission for staff
+        if (!check_staff_permission('systems_read')) {
+            redirect(base_url('admin/access_denied'), 'refresh');
+        }
+
+        $data['system_types'] = $this->system_model->system_list('', 'asc');
+        $data['processState'] = 'Create';
+        $data['processButton'] = 'Create';
+        $data['system_old'] = '';
+
+        $this->load->view('header');
+        $this->load->view('system/index', $data);
+        $this->load->view('footer');
+    }
+
+    function list_system($type = '') {
+        //checking permission for staff
+        if (!check_staff_permission('systems_read')) {
+            redirect(base_url('admin/access_denied'), 'refresh');
+        }
+
+        $data['systems'] = $this->system_model->system_list($type);
+        $data['systems_desc'] = $this->system_model->system_list($type, 'DESC');
+        if ($type) {
+            $data['system_old'] = $type;
+        }
+
+        $this->load->view('header');
+        $this->load->view('system/system_list', $data);
+        $this->load->view('footer');
+    }
+
+    function add($type = '') {
+        //checking permission for staff
+        if (!check_staff_permission('systems_read')) {
+            redirect(base_url('admin/access_denied'), 'refresh');
+        }
+        $data['system_types'] = $this->system_model->system_group_type();
+        $data['system'] = $this->system_model->system_single_value('', '');
+        $data['system_old'] = '';
+        // die(print_r($this->system_model->system_group_type()));
+        if ($type) {
+            $data['system_old'] = $type;
+        }
+        $data['processState'] = 'Create';
+        $data['processButton'] = 'Create';
+
+        $this->load->view('header');
+        $this->load->view('system/add_system', $data);
+        $this->load->view('footer');
+    }
+
+    function add_group() {
+        //checking permission for staff
+        if (!check_staff_permission('systems_read')) {
+            redirect(base_url('admin/access_denied'), 'refresh');
+        }
+
+        $data['system_types'] = $this->system_model->system_list('', 'asc');
+        $data['processState'] = 'Create';
+        $data['processButton'] = 'Create';
+
+        $this->load->view('header');
+        $this->load->view('system/add_group', $data);
+        $this->load->view('footer');
+    }
+
+    function save_group() {
+        //checking permission for staff
+        if (!check_staff_permission('staff_write')) {
+            redirect(base_url('admin/access_denied'), 'refresh');
+        }
+
+        $this->form_validation->set_rules('system_type', 'Group Name', 'required');
+
+        if ($this->form_validation->run() == FALSE) {
+            echo '<div class="alert error"><ul>' . validation_errors('<li style="color:red">', '</li>') . '</ul></div>';
+        } elseif ($this->system_model->exists_single_group($this->input->post('system_type')) > 0) {
+            echo '<div class="alert error" style="color:red"><ul><li>Group Name already used.</li></ul></div>';
+        } else {
+            if ($this->system_model->save_group()) {
+                // $system_id = $this->input->post('system_code');
+                echo 'yes_add';
+            } else {
+                echo $this->lang->line('technical_problem');
+            }
+        }
+    }
+
+    function add_process() {
+        //checking permission for staff
+        if (!check_staff_permission('staff_write')) {
+            redirect(base_url('admin/access_denied'), 'refresh');
+        }
+
+        $this->form_validation->set_rules('system_name', 'Name', 'required');
+        $this->form_validation->set_rules('system_number', 'Number', 'required');
+
+        if ($this->form_validation->run() == FALSE) {
+            echo '<div class="alert error"><ul>' . validation_errors('<li style="color:red">', '</li>') . '</ul></div>';
+        } elseif ($this->system_model->exists_single_value($this->input->post('system_type'), $this->input->post('system_code')) > 0) {
+            echo '<div class="alert error" style="color:red"><ul><li>Code already used.</li></ul></div>';
+        } else {
+            if ($this->system_model->add_system()) {
+                // $system_id = $this->input->post('system_code');
+                echo 'yes_add';
+            } else {
+                echo $this->lang->line('technical_problem');
+            }
+        }
+    }
+
+    function update($system_type = '', $system_id = '') {
+        //checking permission for staff
+        if (!check_staff_permission('systems_read')) {
+            redirect(base_url('admin/access_denied'), 'refresh');
+        }
+
+        $data['system_types'] = $this->system_model->system_group_type();
+        $data['system'] = $this->system_model->system_single_value($system_type, $system_id);
+        $data['processState'] = 'Update';
+        $data['processButton'] = 'Update';
+        $data['system_old'] = '';
+
+        $this->load->view('header');
+        $this->load->view('system/add_system', $data);
+        $this->load->view('footer');
+    }
+
+    function update_process() {
+        //checking permission for staff
+        if (!check_staff_permission('staff_write')) {
+            redirect(base_url('admin/access_denied'), 'refresh');
+        }
+
+        $this->form_validation->set_rules('system_name', 'Name', 'required');
+        $this->form_validation->set_rules('system_number', 'Number', 'required');
+
+        if ($this->form_validation->run() == FALSE) {
+            echo '<div class="alert error"><ul>' . validation_errors('<li style="color:red">', '</li>') . '</ul></div>';
+        } else {
+            if ($this->system_model->update_system()) {
+                // $system_id = $this->input->post('system_code');
+                echo 'yes_update';
+            } else {
+                echo $this->lang->line('technical_problem');
+            }
+        }
+    }
+
+    /*
+     * deletes user
+     * @param  a user id integer
+     * @return string for ajax
+     */
+
+    function delete($system_type, $system_id) {
+        //checking permission for staff
+        if (!check_staff_permission('staff_delete')) {
+            redirect(base_url('admin/access_denied'), 'refresh');
+        }
+
+        if ($this->system_model->delete($system_type, $system_id)) {
+            echo 'deleted';
+        }
+    }
+
+}

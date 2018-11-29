@@ -1,0 +1,299 @@
+<?php
+
+if (!defined('BASEPATH'))
+    exit('No direct script access allowed');
+
+class Contact_persons_model extends CI_Model {
+
+    function __construct() {
+        parent::__construct();
+    }
+
+    function exists_email($email) {
+        $email_count = $this->db->get_where('customer', array('email' => $email))->num_rows();
+        return $email_count;
+    }
+
+    function add_contact_persons() {
+        if (empty($_FILES['customer_avatar']['name'])) {
+            $customer_details = array(
+                'first_name' => $this->input->post('first_name'),
+                'last_name' => $this->input->post('last_name'),
+                'company_id' => $this->input->post('company_id'),
+                'contact_owner' => $this->input->post('contact_owner'),
+                'lead_source_id' => $this->input->post('lead_source_id'),
+                'date_birth' => strtotime($this->input->post('date_birth')),
+                'department' => $this->input->post('department'),
+                'assistant' => $this->input->post('assistant'),
+                'asst_phone' => $this->input->post('asst_phone'),
+                'email_opt_out' => $this->input->post('email_opt_out'),
+                'main_contact_person' => $this->input->post('main_contact_person'),
+                'reports_to' => $this->input->post('reports_to'),
+                'email' => $this->input->post('email'),
+                'address' => $this->input->post('address'),
+                'country_id' => $this->input->post('country_id'),
+                'state_id' => $this->input->post('state_id'),
+                'city_id' => $this->input->post('city_id'),
+                'zip_code' => $this->input->post('zip_code'),
+                'website' => $this->input->post('website'),
+                'job_position' => $this->input->post('job_position'),
+                'phone' => $this->input->post('phone'),
+                'mobile' => $this->input->post('mobile'),
+                'fax' => $this->input->post('fax'),
+                'twitter' => $this->input->post('twitter'),
+                'skype_id' => $this->input->post('skype_id'),
+                'secondary_email' => $this->input->post('secondary_email'),
+                'title_id' => $this->input->post('title_id'),
+                'customer_avatar' => $this->input->post('customer_avatar'),
+                'status' => $this->input->post('status'),
+                'description' => $this->input->post('description'),
+                'register_time' => strtotime(date('d F Y g:i a')),
+                'ip_address' => $this->input->server('REMOTE_ADDR'),
+                'status' => '1',
+                'create_by' => userdata('first_name') . " " . userdata('last_name'),
+                'create_date' => date('Y-m-d')
+            );
+        } else {
+            $config['upload_path'] = './uploads/contacts/';
+            $config['allowed_types'] = config('allowed_extensions');
+            $config['max_size'] = config('max_upload_file_size');
+            $config['encrypt_name'] = TRUE;
+
+            $this->load->library('upload', $config);
+
+            if (!$this->upload->do_upload('customer_avatar')) {
+                echo $this->upload->display_errors();
+            } else {
+                $img_data = $this->upload->data();
+
+                $customer_details = array(
+                    'first_name' => $this->input->post('first_name'),
+                    'last_name' => $this->input->post('last_name'),
+                    'company_id' => $this->input->post('company_id'),
+                    'contact_owner' => $this->input->post('contact_owner'),
+                    'lead_source_id' => $this->input->post('lead_source_id'),
+                    'date_birth' => strtotime($this->input->post('date_birth')),
+                    'department' => $this->input->post('department'),
+                    'assistant' => $this->input->post('assistant'),
+                    'asst_phone' => $this->input->post('asst_phone'),
+                    'email_opt_out' => $this->input->post('email_opt_out'),
+                    'main_contact_person' => $this->input->post('main_contact_person'),
+                    'reports_to' => $this->input->post('reports_to'),
+                    'email' => $this->input->post('email'),
+                    'address' => $this->input->post('address'),
+                    'country_id' => $this->input->post('country_id'),
+                    'state_id' => $this->input->post('state_id'),
+                    'city_id' => $this->input->post('city_id'),
+                    'zip_code' => $this->input->post('zip_code'),
+                    'website' => $this->input->post('website'),
+                    'job_position' => $this->input->post('job_position'),
+                    'phone' => $this->input->post('phone'),
+                    'mobile' => $this->input->post('mobile'),
+                    'fax' => $this->input->post('fax'),
+                    'twitter' => $this->input->post('twitter'),
+                    'skype_id' => $this->input->post('skype_id'),
+                    'secondary_email' => $this->input->post('secondary_email'),
+                    'title_id' => $this->input->post('title_id'),
+                    'customer_avatar' => $img_data['file_name'],
+                    'status' => $this->input->post('status'),
+                    'description' => $this->input->post('description'),
+                    'register_time' => strtotime(date('d F Y g:i a')),
+                    'ip_address' => $this->input->server('REMOTE_ADDR'),
+                    'status' => '1',
+                    'create_by' => userdata('first_name') . " " . userdata('last_name'),
+                    'create_date' => date('Y-m-d')
+                );
+            }
+        }
+
+        $contact_person_res = $this->db->insert('customer', $customer_details);
+        $contact_person_id = $this->db->insert_id();
+
+        if ($this->input->post('main_contact_person') == '1') {
+            $company_details = array(
+                'main_contact_person' => $contact_person_id,
+            );
+
+            $this->db->update('company', $company_details, array('id' => $this->input->post('company')));
+        }
+
+        return $contact_person_res;
+    }
+
+    function sys_account_list($type) {
+
+        $this->db->order_by("system_value_num", "asc");
+        $this->db->where("system_type", $type);
+        $this->db->select("*");
+        $this->db->from("tb_m_system");
+
+        return $this->db->get()->result();
+    }
+
+    function country_list() {
+        $this->db->order_by("name", "asc");
+        $this->db->from('countries');
+
+        return $this->db->get()->result();
+    }
+
+    function state_list($country_id) {
+
+        $this->db->order_by("name", "asc");
+        $this->db->select('states.*');
+        $this->db->from('states');
+        $this->db->where('country_id', $country_id);
+
+        return $this->db->get()->result();
+    }
+
+    function city_list($state_id) {
+
+        $this->db->order_by("name", "asc");
+        $this->db->select('cities.*');
+        $this->db->from('cities');
+        $this->db->where('state_id', $state_id);
+
+        return $this->db->get()->result();
+    }
+
+    function update_contact_person() {
+        if (empty($_FILES['customer_avatar']['name'])) {
+            $customer_details = array(
+                'first_name' => $this->input->post('first_name'),
+                'last_name' => $this->input->post('last_name'),
+                'company_id' => $this->input->post('company_id'),
+                'contact_owner' => $this->input->post('contact_owner'),
+                'lead_source_id' => $this->input->post('lead_source_id'),
+                'date_birth' => strtotime($this->input->post('date_birth')),
+                'department' => $this->input->post('department'),
+                'assistant' => $this->input->post('assistant'),
+                'asst_phone' => $this->input->post('asst_phone'),
+                'email_opt_out' => $this->input->post('email_opt_out'),
+                'main_contact_person' => $this->input->post('main_contact_person'),
+                'reports_to' => $this->input->post('reports_to'),
+                'email' => $this->input->post('email'),
+                'address' => $this->input->post('address'),
+                'country_id' => $this->input->post('country_id'),
+                'state_id' => $this->input->post('state_id'),
+                'city_id' => $this->input->post('city_id'),
+                'zip_code' => $this->input->post('zip_code'),
+                'website' => $this->input->post('website'),
+                'job_position' => $this->input->post('job_position'),
+                'phone' => $this->input->post('phone'),
+                'mobile' => $this->input->post('mobile'),
+                'fax' => $this->input->post('fax'),
+                'twitter' => $this->input->post('twitter'),
+                'skype_id' => $this->input->post('skype_id'),
+                'secondary_email' => $this->input->post('secondary_email'),
+                'title_id' => $this->input->post('title_id'),
+                'status' => $this->input->post('status'),
+                'description' => $this->input->post('description'),
+                'register_time' => strtotime(date('d F Y g:i a')),
+                'ip_address' => $this->input->server('REMOTE_ADDR'),
+                'status' => '1',
+                'changed_by' => userdata('first_name') . " " . userdata('last_name'),
+                'changed_date' => date('Y-m-d')
+            );
+        } else {
+            $config['upload_path'] = './uploads/contacts/';
+            $config['allowed_types'] = config('allowed_extensions');
+            $config['max_size'] = config('max_upload_file_size');
+            $config['encrypt_name'] = TRUE;
+
+            $this->load->library('upload', $config);
+
+            if (!$this->upload->do_upload('customer_avatar')) {
+                echo $this->upload->display_errors();
+            } else {
+                $img_data = $this->upload->data();
+
+                $customer_details = array(
+                    'first_name' => $this->input->post('first_name'),
+                    'last_name' => $this->input->post('last_name'),
+                    'company_id' => $this->input->post('company_id'),
+                    'contact_owner' => $this->input->post('contact_owner'),
+                    'lead_source_id' => $this->input->post('lead_source_id'),
+                    'date_birth' => strtotime($this->input->post('date_birth')),
+                    'department' => $this->input->post('department'),
+                    'assistant' => $this->input->post('assistant'),
+                    'asst_phone' => $this->input->post('asst_phone'),
+                    'email_opt_out' => $this->input->post('email_opt_out'),
+                    'main_contact_person' => $this->input->post('main_contact_person'),
+                    'reports_to' => $this->input->post('reports_to'),
+                    'email' => $this->input->post('email'),
+                    'address' => $this->input->post('address'),
+                    'country_id' => $this->input->post('country_id'),
+                    'state_id' => $this->input->post('state_id'),
+                    'city_id' => $this->input->post('city_id'),
+                    'zip_code' => $this->input->post('zip_code'),
+                    'website' => $this->input->post('website'),
+                    'job_position' => $this->input->post('job_position'),
+                    'phone' => $this->input->post('phone'),
+                    'mobile' => $this->input->post('mobile'),
+                    'fax' => $this->input->post('fax'),
+                    'twitter' => $this->input->post('twitter'),
+                    'skype_id' => $this->input->post('skype_id'),
+                    'secondary_email' => $this->input->post('secondary_email'),
+                    'title_id' => $this->input->post('title_id'),
+                    'customer_avatar' => $img_data['file_name'],
+                    'status' => $this->input->post('status'),
+                    'description' => $this->input->post('description'),
+                    'register_time' => strtotime(date('d F Y g:i a')),
+                    'ip_address' => $this->input->server('REMOTE_ADDR'),
+                    'status' => '1',
+                    'changed_by' => userdata('first_name') . " " . userdata('last_name'),
+                    'changed_date' => date('Y-m-d')
+                );
+            }
+        }
+
+        //Update main contact
+        if ($this->input->post('main_contact_person') == '1') {
+            $company_details = array(
+                'main_contact_person' => $this->input->post('customer_id'),
+            );
+
+            
+            $this->db->update('company', $company_details, array('id' => $this->input->post('company')));
+        }
+        $r = $this->get_contact_persons($this->input->post('customer_id'));
+        $customer_details['prev_company_id']=$r->company_id;
+        return $this->db->update('customer', $customer_details, array('id' => $this->input->post('customer_id')));
+    }
+
+    function total_customers() {
+        $this->db->order_by("id", "desc");
+        $this->db->from('customer');
+
+        return count($this->db->get()->result());
+    }
+
+    function contact_persons_list() {
+        $this->db->order_by("first_name", "asc");
+        $this->db->from('customer');
+
+        return $this->db->get()->result();
+    }
+
+    function get_contact_persons_by_company($company_id) {
+        $this->db->order_by("first_name", "asc");
+        $this->db->from('customer');
+        $this->db->where('company_id', $company_id);
+
+        return $this->db->get()->result();
+    }
+
+    function get_contact_persons($customer_id) {
+        return $this->db->get_where('customer', array('id' => $customer_id))->row();
+    }
+
+    function delete($contact_person_id) {
+        if ($this->db->delete('customer', array('id' => $contact_person_id))) {  // Delete contact person
+            return true;
+        }
+    }
+
+}
+
+?>

@@ -1,0 +1,173 @@
+<?php
+
+if (!defined('BASEPATH'))
+    exit('No direct script access allowed');
+
+class System_model extends CI_Model {
+
+    function __construct() {
+        parent::__construct();
+    }
+
+    function system_list($system_type, $order_by=null) {
+        if ($system_type) {
+            $this->db->where('system_type', $system_type);
+        }
+        if (!is_null($order_by)) {
+            $this->db->order_by("system_type", $order_by);
+        } else {
+            $this->db->order_by("system_value_num", "asc");
+        }
+        $this->db->from('tb_m_system');
+
+        return $this->db->get()->result();
+    }
+
+    function system_list_tags($system_type, $order_by=null) {
+        if ($system_type) {
+            $this->db->where('system_type', $system_type);
+        }
+        if (!is_null($order_by)) {
+            $this->db->order_by("system_value_txt", $order_by);
+        } else {
+            $this->db->order_by("system_value_text", "asc");
+        }
+        $this->db->from('tb_m_system');
+
+        return $this->db->get()->result();
+    }
+
+    function system_single_value($system_type, $system_code) {
+        return $this->db->get_where('tb_m_system', array('system_type' => $system_type, 'system_code' => $system_code))->row();
+    }
+    
+    //MM
+    function system_single_value_stage($system_type, $system_value_num) {
+        return $this->db->get_where('tb_m_system', array('system_type' => $system_type, 'system_value_num' => $system_value_num))->row();
+    }
+    //MM
+
+    function system_group_type() {
+        $this->db->order_by("system_type");
+        $this->db->order_by("system_value_num", "asc");
+        $this->db->group_by("system_type");
+        $this->db->from('tb_m_system');
+
+        return $this->db->get()->result();
+    }
+
+    function exists_single_group($system_type) {
+        $vowels = array(" ", ".", "/", "-", ",");
+        $this->db->from('tb_m_system');
+        $this->db->where(array('system_type' => str_replace($vowels, '_', strtoupper($system_type))));
+        return $this->db->get()->num_rows();
+    }
+
+    function exists_single_value($system_type, $system_code) {
+        return $this->db->get_where('tb_m_system', array('system_type' => $system_type, 'system_code' => $system_code))->num_rows();
+    }
+
+    function last_code($system_type) {
+        $this->db->order_by("system_code", "desc");
+        $this->db->limit(1);
+        $this->db->from('tb_m_system');
+        $this->db->where(array('system_type' => $system_type));
+
+        return $this->db->get()->row()->system_code;
+    }
+
+    function save_group() {
+        date_default_timezone_set("Asia/Jakarta");
+        $vowels = array(" ", ".", "/", "-", ",");
+
+        $system_details = array(
+            'system_type' => str_replace($vowels, '_', strtoupper($this->input->post('system_type'))),
+            'system_code' => '00',
+            'system_value_txt' => $this->input->post('system_desc'),
+            'system_value_num' => '0',
+            'valid_from' => date('Y-m-d'),
+            'created_by' => userdata('first_name') . " " . userdata('last_name'),
+            'created_dt' => date('Y-m-d H:i:s')
+        );
+
+        return $this->db->insert('tb_m_system', $system_details);
+    }
+
+    function add_system() {
+        date_default_timezone_set("Asia/Jakarta");
+        $last = $this->system_model->last_code($this->input->post('system_type'));
+        $next = $last + 1;
+        $leng = strlen($next);
+        switch ($leng) {
+            case 1 :
+                $last_code = '0' . $next;
+                break;
+            case 2 :
+                $last_code = $next;
+                break;
+            default:
+                $last_code = '00';
+                break;
+        }
+
+        if ($this->input->post('system_type') == 'TAGS' || $this->input->post('system_type') == 'OPPORTUNITIES_STAGES') {
+            $status = $this->input->post('color_pic');
+            //MM
+            if($this->input->post('system_type') == 'OPPORTUNITIES_STAGES'){
+            $percentage = $this->input->post('percentage');
+            }
+            //MM  
+        } else if ($this->input->post('system_type') == 'EMAIL_TYPE') {
+            $status = $this->input->post('email_type');
+        } else {
+            $status = null;
+        }
+
+        $system_details = array(
+            'system_type' => $this->input->post('system_type'),
+            'system_code' => $last_code,
+            'system_value_txt' => $this->input->post('system_name'),
+            'system_value_num' => $this->input->post('system_number'),
+            'status' => $status,
+            //MM
+            'percentage' => $percentage,
+            //MM
+            'valid_from' => date('Y-m-d'),
+            'created_by' => userdata('first_name') . " " . userdata('last_name'),
+            'created_dt' => date('Y-m-d H:i:s')
+        );
+
+        return $this->db->insert('tb_m_system', $system_details);
+    }
+
+    function update_system() {
+        date_default_timezone_set("Asia/Jakarta");
+        //MM
+        if($this->input->post('system_type') == 'OPPORTUNITIES_STAGES'){
+        $percentage = $this->input->post('percentage');
+        }
+        //MM  
+        $system_details = array(
+            'system_value_txt' => $this->input->post('system_name'),
+            'system_value_num' => $this->input->post('system_number'),
+            //MM
+            'percentage' => $percentage,
+            //MM
+            'valid_from' => date('Y-m-d'),
+            'status' => $this->input->post('color_pic'),
+            'changed_by' => userdata('first_name') . " " . userdata('last_name'),
+            'changed_dt' => date('Y-m-d H:i:s')
+        );
+
+        return $this->db->update('tb_m_system', $system_details, array('system_type' => $this->input->post('system_old_type'), 'system_code' => $this->input->post('system_id')));
+    }
+
+    function delete($system_type, $system_id) {
+        if ($this->db->delete('tb_m_system', array('system_type' => $system_type, 'system_code' => $system_id))) {  // Delete system
+            return true;
+        }
+    }
+
+}
+
+?>

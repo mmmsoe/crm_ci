@@ -1,0 +1,158 @@
+/** CUSTOM BY [EGA] **/
+
+thead{
+	border-top: 2px solid #ddd;
+}
+
+th{
+	font-weight: 800;
+}
+
+/* Inject section */
+.select2-container .select2-choices .select2-search-field input, .select2-container .select2-choice, .select2-container .select2-choices {
+	border-radius: 3px;
+	margin-top: 0px;
+	height: 35px;
+}
+
+table.dataTable thead > tr > th {
+	padding-left: 8px;
+}
+
+.ui-datepicker {
+	z-index: 10001 !important;
+}
+
+form .file-button {
+	height: 34px;
+}
+
+.widget-infobox .infobox {
+	min-width: 100%;
+}
+
+.widget-infobox {
+	display: inline-block;
+	margin-top: 0;
+	float: none;
+	padding: 0 5px;
+}
+
+.jqplot-target {
+	width: 100% !important;
+}
+
+.amcharts-main-div a {
+	left: auto !important;
+	right: 0;
+}
+
+.stock2 .tab-content {
+	min-height: auto;
+	height: 450px;
+}
+
+.todo-list li .todo-date {
+	margin-left: 0;
+}
+
+.widget-stock .tab_right .nav-tabs li a {
+	display: inline-block;
+	color: #fff;
+	width: 100%;
+}
+
+.widget-stock .tab_right .nav-tabs li  {
+	border-bottom: 1px dashed #fff;
+}
+
+.widget-stock .tab_right .nav-tabs li:last-child  {
+	border-bottom: none;
+}
+
+.main-content .page-content #visitors-chart {
+	position: relative;
+	width: 100%;
+	height: 100%;
+}
+
+.theme-sltd.color-default .sidebar .sidebar-inner .nav-sidebar .children li.active:before {
+	background-color : #0C59B0;
+}
+
+/* behavior section */
+.hide {
+	display: none;
+}
+
+.block { display: block; }
+.inline-block { display: inline-block; }
+
+/* width section */
+.full { width: 100% }
+.full-break { width: 100% !important }
+
+/* height section */
+textarea.height-row-2 { height: 110px; }
+
+/* Padding section */
+.clearPad { padding: 0 }
+
+.clearPad-l { padding-left: 0 	}
+.clearPad-r { padding-right: 0 	}
+.clearPad-t { padding-top: 0 	}
+.clearPad-b { padding-bottom: 0 	}
+
+.clearPad-lr { padding-left: 0; padding-right: 0 }
+.clearPad-tb { padding-top: 0; padding-bottom: 0 }
+
+.pad-l { padding-left: 1em }
+.pad-r { padding-right: 1em }
+.pad-t { padding-top: 1em }
+.pad-b { padding-bottom: 1em }
+
+.pad-l-2x { padding-left: 2em }
+.pad-r-2x { padding-right: 2em }
+
+.pad-l-3x { padding-left: 3em }
+.pad-r-3x { padding-right: 3em }
+
+/* Margin section */
+.clearMar { margin: 0 !important }
+.clearMar-t { margin-top: 0 !important }
+.clearMar-b { margin-bottom: 0 !important }
+.clearMar-tb { margin-top: 0 !important; margin-bottom: 0 !important }
+
+.mar-l { margin-left: 1em }
+.mar-r { margin-right: 1em }
+.mar-t { margin-top: 1em }
+.mar-b { margin-bottom: 1em }
+.mar-tb { margin-top: 1em; margin-bottom: 1em }
+
+/* Radius section */
+.clearRad-l, .clearRad-l-box .select2-choice { border-top-left-radius: 0px; border-bottom-left-radius: 0px; }
+.clearRad-r, .clearRad-r-box .select2-choice { border-top-right-radius: 0px; border-bottom-right-radius: 0px; }
+
+.clearRad-l-box .select2-choice { height: 35px; }
+.clearRad-r-box .select2-choice { height: 35px; }
+
+/* Border section */
+.bord-l { border-left: 1px solid #DDDFE1 }
+.bord-r { border-right: 1px solid #DDDFE1 }
+
+/* From Section */
+select { height: 35px !important }
+.numeric { text-align: right; }
+
+/* COLOR Section */
+.btn-black {
+	background-color: #555;
+    color: #fff;
+}
+
+.btn-gray {
+	background-color: #ccc;
+    color: #fff;
+}
+
+

@@ -1,0 +1,365 @@
+<?php if ( ! defined('BASEPATH')) exit('No direct script access allowed');
+
+class Opportunities extends CI_Controller {
+
+    function Opportunities() 
+    {
+         parent::__construct();
+		 $this->load->database();
+		 $this->load->model("opportunities_model");
+		 $this->load->model("customers_model");
+		 $this->load->model("contact_persons_model");
+		 $this->load->model("staff_model");
+		 $this->load->model("salesteams_model");
+		 $this->load->model("calls_model");
+		 $this->load->model("meetings_model");  
+		 $this->load->model("campaign_model");
+		 $this->load->model("system_model");
+         $this->load->library('form_validation');
+         
+         /*cache control*/
+		$this->output->set_header('Last-Modified: ' . gmdate("D, d M Y H:i:s") . ' GMT');
+        $this->output->set_header('Cache-Control: no-store, no-cache, must-revalidate, post-check=0, pre-check=0');
+        $this->output->set_header('Pragma: no-cache');
+        $this->output->set_header("Expires: Mon, 26 Jul 1997 05:00:00 GMT");
+         
+         check_login(); 
+    }
+
+	function index()
+	{
+			//checking permission for staff
+			if (!check_staff_permission('opportunities_read'))	
+			{
+				redirect(base_url('admin/access_denied'), 'refresh');  
+			} 
+			$times='month';
+				
+			
+		    	$data['opportunities'] = $this->opportunities_model->opportunities_list(userdata('id'),$times);
+		    	$data['allstatus'] = $this->system_model->system_list('OPPORTUNITIES_STAGES'); 
+				 
+				$this->load->view('header');
+				$this->load->view('opportunities/index',$data);
+				$this->load->view('footer');
+			 
+	}
+	function add()
+	{
+				//checking permission for staff
+				 if (!check_staff_permission('opportunities_write'))	
+				{
+					redirect(base_url('admin/access_denied'), 'refresh');  
+				}
+				
+				$data['processState'] = 'Create';
+				$data['processButton'] = 'Create';
+		    	$data['companies'] = $this->customers_model->company_list();
+		    	$data['staffs'] = $this->staff_model->staff_list(); 
+		    	$data['salesteams'] = $this->salesteams_model->salesteams_list(); 
+		    	$data['sources'] = $this->system_model->system_list('LEAD');
+				$data['priorities'] = $this->system_model->system_list('PRIORITY'); 
+				$data['types'] = $this->system_model->system_list('OPPORTUNITIES_TYPE'); 
+				$data['stages'] = $this->system_model->system_list('OPPORTUNITIES_STAGES');
+				$data['campaigns'] = $this->campaign_model->campaign_list('');
+				
+				$this->load->view('header');
+				$this->load->view('opportunities/form',$data);
+				$this->load->view('footer');
+			 
+	}
+	function add_process()
+	{
+				//checking permission for staff
+				  if (!check_staff_permission('opportunities_write'))	
+				{
+					redirect(base_url('admin/access_denied'), 'refresh');  
+				}   
+				 
+				$this->form_validation->set_rules('salesperson_id', 'Sales Person on Opportunity owner', 'required');  			
+				$this->form_validation->set_rules('sales_team_id', 'Sales Team on Opportunity owner', 'required');
+				$this->form_validation->set_rules('opportunity', 'Opportunity', 'required');
+				// $this->form_validation->set_rules('customer_id', 'Customer', 'required');
+				$this->form_validation->set_rules('expected_closing', 'Expected closing', 'required');
+				$this->form_validation->set_rules('stages_id', 'Stages', 'required');
+				
+				if( $this->form_validation->run() == FALSE )
+		        {
+		            echo '<div class="alert"><ul>' . validation_errors('<li style="color:red">','</li>') . '</ul></div>';
+		        }
+		        else
+		        {
+		            
+		            if( $this->opportunities_model->add_opportunities())
+		            { 
+		            
+		            	$opportunity_id=$this->db->insert_id();
+              
+             			 add_notifications($this->input->post('salesperson_id'),'New Opportunities Added',$opportunity_id,'opportunities');
+              	
+		                echo 'yes_'.$opportunity_id.'_add';
+		                //echo '<div class="alert ok">'.$this->lang->line('create_succesful').'</div>';
+		            }
+		            else
+		            {
+		                echo $this->lang->line('technical_problem');
+		            }
+		        }
+			 
+	}
+	
+	function view($opportunity_id)
+	{
+				//checking permission for staff
+				 if (!check_staff_permission('opportunities_read'))	
+				{
+					redirect(base_url('admin/access_denied'), 'refresh');  
+				}
+				
+				$data['companies'] = $this->customers_model->company_list();
+				$data['staffs'] = $this->staff_model->staff_list(); 
+		    	$data['calls'] = $this->calls_model->calls_list($opportunity_id,$type='opportunities');  
+				$data['meetings'] = $this->meetings_model->meetings_list($opportunity_id,$type='opportunities');  
+				$data['opportunity'] = $this->opportunities_model->get_opportunities( $opportunity_id );	 
+				$data['sources'] = $this->system_model->system_list('LEAD');
+				$data['priorities'] = $this->system_model->system_list('PRIORITY'); 
+				$data['types'] = $this->system_model->system_list('OPPORTUNITIES_TYPE'); 
+				$data['stages'] = $this->system_model->system_list('OPPORTUNITIES_STAGES');
+				$data['campaigns'] = $this->campaign_model->campaign_list('');
+				
+				$this->load->view('header');
+				$this->load->view('opportunities/view',$data);
+				$this->load->view('footer');
+			 
+	}
+	
+	function update($opportunity_id)
+	{
+			//checking permission for staff
+				/*if (!check_staff_permission('opportunities_write'))	
+				{
+					redirect(base_url('admin/access_denied'), 'refresh');  
+				} */
+				
+				$data['processState'] = 'Edit';
+				$data['processButton'] = 'Update';
+				$data['companies'] = $this->customers_model->company_list();
+				$data['staffs'] = $this->staff_model->staff_list(); 
+				$data['salesteams'] = $this->salesteams_model->salesteams_list(); 
+				$data['calls'] = $this->calls_model->calls_list($opportunity_id,$type='opportunities');  
+				$data['meetings'] = $this->meetings_model->meetings_list($opportunity_id,$type='opportunities');  
+				$data['opportunity'] = $this->opportunities_model->get_opportunities( $opportunity_id );	 
+				$data['sources'] = $this->system_model->system_list('LEAD');
+				$data['priorities'] = $this->system_model->system_list('PRIORITY'); 
+				$data['types'] = $this->system_model->system_list('OPPORTUNITIES_TYPE'); 
+				$data['stages'] = $this->system_model->system_list('OPPORTUNITIES_STAGES'); 
+				$data['campaigns'] = $this->campaign_model->campaign_list('');
+				
+				$company_id = $this->opportunities_model->get_opportunities( $opportunity_id )->customer_id;
+				$data['contacts'] = $this->opportunities_model->contact_list($company_id);
+				
+				$this->load->view('header');
+				$this->load->view('opportunities/form',$data);
+			    $this->load->view('footer');
+	}
+	
+	function update_process()
+	{
+		//checking permission for staff
+		if (!check_staff_permission('opportunities_write'))	
+			{
+				redirect(base_url('admin/access_denied'), 'refresh');  
+			}		   
+		
+			$this->form_validation->set_rules('salesperson_id', 'Sales Person', 'required');  			
+			$this->form_validation->set_rules('sales_team_id', 'Sales Team', 'required');
+			$this->form_validation->set_rules('opportunity', 'Opportunity', 'required');
+			// $this->form_validation->set_rules('customer_id', 'Customer', 'required');
+			$this->form_validation->set_rules('expected_closing', 'Expected closing', 'required');
+			$this->form_validation->set_rules('stages_id', 'Stages', 'required');
+			
+		if( $this->form_validation->run() == FALSE )
+        {
+            echo '<div class="alert error"><ul>' . validation_errors('<li style="color:red">','</li>') . '</ul></div>';
+        }
+        else
+        {
+            
+            if( $this->opportunities_model->update_opportunities() )
+            {
+				$opportunity_id = $this->input->post('opportunity_id');        	
+				echo 'yes_'.$opportunity_id.'_update';     
+			}
+            else
+            {
+                echo $this->lang->line('technical_problem');
+            }
+        }
+	}
+	
+	
+	function get_filter()
+	 {
+		//checking permission for staff
+	   if (!check_staff_permission('leads_read')) 
+	   {
+		redirect(base_url('admin/access_denied'), 'refresh');  
+	   } 
+	  $opportunities=$this->input->post("type");
+	  $times=$this->input->post("time");
+	   if ( $times){
+		$data['opportunities'] = $this->opportunities_model->stages_getfilter(userdata('id'),$opportunities,$times);
+	   }
+	   
+		$this->load->view('opportunities/opportunities_data',$data);
+		
+	 }
+	
+	
+	
+	function ajax_get_contact($company_id)
+    {	
+    	$data['contacts'] = $this->opportunities_model->contact_list($company_id);    	 
+        $this->load->view('ajax_get_contact',$data);
+    	
+   	}
+	
+	/*
+     * deletes opportunity     *  
+     */
+	function delete( $opportunity_id )
+	{
+		//checking permission for staff
+		if (!check_staff_permission('opportunities_delete'))	
+			{
+				redirect(base_url('admin/access_denied'), 'refresh');  
+			}		    
+		 
+			if( $this->opportunities_model->delete($opportunity_id) )
+			{
+				echo 'deleted';
+			}
+		
+	}	
+	
+	//Add Call
+   	function add_call()
+	{
+		    	  
+		check_login(); 
+		
+		$this->form_validation->set_rules('call_summary', 'Call Summary', 'required');
+		 
+		
+		if( $this->form_validation->run() == FALSE )
+        {
+            echo '<div style="color:red;margin-left:15px;">' . validation_errors() . '</div>';
+        }
+        else
+        {
+            
+            if( $this->calls_model->add_calls())
+            { 
+                echo '<div class="alert alert-success">'.$this->lang->line('create_succesful').'</div>';
+            }
+            else
+            {
+                echo $this->lang->line('technical_problem');
+            }
+        }
+			 
+	}
+	
+	/*
+     * deletes call     *  
+     */
+	function call_delete( $call_id )
+	{
+		check_login();  
+		 
+			if( $this->calls_model->delete($call_id) )
+			{
+				echo 'deleted';
+			}
+		
+	}
+	
+	
+	//Add Meetings
+   	function add_meeting()
+	{
+		    	  
+		  
+		$this->form_validation->set_rules('meeting_subject', 'Meeting Subject', 'required');
+		$this->form_validation->set_rules('starting_date', 'Starting date', 'required');		
+		$this->form_validation->set_rules('ending_date', 'Ending date', 'required');
+		
+		$startDate = strtotime($_POST['starting_date']);
+		$endDate = strtotime($_POST['ending_date']);
+
+		  
+	 
+		if( $this->form_validation->run() == FALSE )
+        {
+            echo '<div style="color:red;margin-left:15px;">' . validation_errors() . '</div>';
+        }
+        elseif ($startDate >= $endDate)
+        {
+			echo '<div style="color:red;margin-left:15px;">Should be greater than Start Date</div>';
+		  	exit;	
+		}
+        else
+        {
+            
+            if( $this->meetings_model->add_meetings())
+            { 
+                echo '<div class="alert alert-success">'.$this->lang->line('create_succesful').'</div>';
+            }
+            else
+            {
+                echo $this->lang->line('technical_problem');
+            }
+        }
+			 
+	} 
+	
+	/*
+     * deletes Meetings     *  
+     */
+	function meeting_delete( $meeting_id )
+	{
+		check_login();  
+		 
+			if( $this->meetings_model->delete($meeting_id) )
+			{
+				echo 'deleted';
+			}
+		
+	}
+   	
+   	/*
+     * confirm sale*  
+     */
+	function convert_to_quotation( $opportunity_id )
+	{ 
+		if( $this->opportunities_model->convert_to_quotation($opportunity_id))
+		{
+			$quotation_id = $this->db->insert_id();
+			redirect('admin/quotations/update/'.$quotation_id);
+		}
+		   
+	} 
+	
+	function convert_to_customer()
+	{
+		if( $this->opportunities_model->add_convert_to_customer())
+		{ 
+		  redirect("admin/customers/update/".$this->db->insert_id());              		    
+		}
+		else
+		{
+			redirect("admin/opportunities/view/".$_POST['convert_opport_id']);
+		}
+	}
+	 
+}
